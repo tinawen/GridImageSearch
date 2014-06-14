@@ -12,6 +12,7 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridView;
+import android.widget.Toast;
 
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.JsonHttpResponseHandler;
@@ -30,6 +31,7 @@ public class SearchActivity extends ActionBarActivity {
     ArrayList<ImageResult> imageResults = new ArrayList<ImageResult>();
     ImageResultArrayAdapter imageAdapter;
     ImageFiltering imageFiltering;
+    Boolean hasReachedPageLimit;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,7 +39,7 @@ public class SearchActivity extends ActionBarActivity {
         setContentView(R.layout.activity_search);
         setupViews();
         // the deprecated google image search API displays a maximum of 64 pictures
-        gvResults.setOnScrollListener(new EndlessScrollListener(5, 64) {
+        gvResults.setOnScrollListener(new EndlessScrollListener() {
             @Override
             public void onLoadMore(int page, int totalItemsCount) {
                 // Triggered only when new data needs to be appended to the list
@@ -104,12 +106,17 @@ public class SearchActivity extends ActionBarActivity {
     }
 
     public void performNewSearch() {
-        imageResults.clear();
-        imageAdapter.notifyDataSetChanged();
+        //imageResults.clear();
+        //imageAdapter.notifyDataSetChanged();
+        hasReachedPageLimit = false;
         performSearch(0);
     }
 
-    private  void performSearch(int offset) {
+    private  void performSearch(final int offset) {
+        if (hasReachedPageLimit) {
+            Log.d("DEBUG", "IMAGE_SEARCH: has reached page limit, not searching");
+            return;
+        }
         String query = etQuery.getText().toString();
         AsyncHttpClient client = new AsyncHttpClient();
         // http://ajax.googleapis.com/ajax/services/search/images?v=1.0&q=android
@@ -146,22 +153,28 @@ public class SearchActivity extends ActionBarActivity {
             }
         }
         apiString += "&v=1.0&q=" + Uri.encode(query);
-        Log.d("DEBUG", "sending http request for " + apiString);
+        Log.d("DEBUG", "IMAGE_SEARCH: sending http request for " + apiString);
         client.get(apiString,
                 new JsonHttpResponseHandler() {
                     @Override
                     public void onSuccess(JSONObject response) {
+                        Log.d("DEBUG", "IMAGE_SEARCH: heard a response on success");
                         JSONArray imageJsonResults = null;
                         try {
+                            if (response.isNull("responseData")) {
+                                hasReachedPageLimit = true;
+                                Log.d("DEBUG", "IMAGE_SEARCH: has reached page limit!");
+                                return;
+                            }
                             imageJsonResults = response.getJSONObject(
                                     "responseData").getJSONArray("results");
                             // check if is first page
                             JSONObject cursor = response.getJSONObject("responseData").getJSONObject("cursor");
                             int currentPageIndex = cursor.getInt("currentPageIndex");
                             JSONArray pages = cursor.getJSONArray("pages");
-                            JSONObject startLabelPair = pages.getJSONObject(currentPageIndex + 1);
-                            Log.d("DEBUG", "http response back" + pages.toString());
 
+                            Log.d("DEBUG", "IMAGE_SEARCH: http response back" + pages.toString() + " has reached page limit is " + hasReachedPageLimit);
+                            Log.d("DEBUG", "IMAGE_SEARCH: current page index is " + currentPageIndex + " results count is " + ImageResult.fromJSONArray(imageJsonResults).size());
                             // reset if first page
                             if (currentPageIndex == 0) {
                                 imageResults.clear();
@@ -169,18 +182,31 @@ public class SearchActivity extends ActionBarActivity {
                             // always append
                             imageResults.addAll(ImageResult.fromJSONArray(imageJsonResults));
                             imageAdapter.notifyDataSetChanged();
+                            Log.d("DEBUG", "IMAGE_SEARCH, hasReachedPageLimit is " + hasReachedPageLimit +
+                                    " pages.length is " + pages.length() + " images results array count is " + imageResults.size());
+                            if (!hasReachedPageLimit) {
+                                if (pages.length() == currentPageIndex + 1) {
+                                    hasReachedPageLimit = true;
+                                    Log.d("DEBUG", "IMAGE_SEARCH: not much result. has reached limit");
+                                }
+                            }
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
                     }
-                    public void onFailure(int statusCode, org.apache.http.Header[] headers, java.lang.String responseBody, java.lang.Throwable e) {
-                        Log.d("DEBUG", "request failed");
+                    @Override
+                    public void onFailure(Throwable e, JSONArray errorResponse) {
+                        Log.d("DEBUG", "IMAGE_SEARCH: heard a response on failure");
+                        Log.d("ERROR", e.toString());
+                        Toast.makeText(getApplicationContext(), "Network request failed", Toast.LENGTH_SHORT).show();
+                        // retry
+                        performSearch(offset);
                     }
                 });
     }
     // Append more data into the adapter
     public void customLoadMoreDataFromApi(int offset) {
+        Log.d("DEBUG", "IMAGE_SEARCH: firing search at offset " + offset);
         performSearch(offset);
-        Log.d("DEBUG", "firing search at offset " + offset);
     }
 }

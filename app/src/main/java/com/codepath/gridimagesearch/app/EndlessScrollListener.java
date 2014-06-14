@@ -15,19 +15,18 @@ public abstract class EndlessScrollListener implements AbsListView.OnScrollListe
     private boolean loading = true;
     // Sets the starting page index
     private int startingPageIndex = 0;
-    // Stop loading more if we've hit the upperLmit
-    private int upperLimit = Integer.MAX_VALUE;
 
-    public EndlessScrollListener(int visibleThreshold, int upperLimit) {
-        this.visibleThreshold = visibleThreshold;
-        this.upperLimit = upperLimit;
+    public EndlessScrollListener() {
     }
 
-    public EndlessScrollListener(int visibleThreshold, int startPage, int upperLimit) {
+    public EndlessScrollListener(int visibleThreshold) {
+        this.visibleThreshold = visibleThreshold;
+    }
+
+    public EndlessScrollListener(int visibleThreshold, int startPage) {
         this.visibleThreshold = visibleThreshold;
         this.startingPageIndex = startPage;
         this.currentPage = startPage;
-        this.upperLimit = upperLimit;
     }
 
     // This happens many times a second during a scroll, so be wary of the code you place here.
@@ -39,15 +38,19 @@ public abstract class EndlessScrollListener implements AbsListView.OnScrollListe
         // If the total item count is zero and the previous isn't, assume the
         // list is invalidated and should be reset back to initial state
         if (totalItemCount < previousTotalItemCount) {
+            Log.d("DEBUG", "IMAGE_SEARCH, onScroll resetting, totalItemCount is " + totalItemCount + " previousTotalItemCount is " + previousTotalItemCount);
             this.currentPage = this.startingPageIndex;
             this.previousTotalItemCount = totalItemCount;
-            if (totalItemCount == 0) { this.loading = true; }
+            if (totalItemCount == 0) { this.loading = true;
+                Log.d("DEBUG", "IMAGE_SEARCH, onScroll resetting loading to true");
+            }
         }
 
         // If it’s still loading, we check to see if the dataset count has
         // changed, if so we conclude it has finished loading and update the current page
         // number and total item count.
         if (loading && (totalItemCount > previousTotalItemCount)) {
+            Log.d("DEBUG", "IMAGE_SEARCH, setting loading to false totalItemCount is " + totalItemCount + " previous total item count is " + previousTotalItemCount);
             loading = false;
             previousTotalItemCount = totalItemCount;
             currentPage++;
@@ -57,13 +60,9 @@ public abstract class EndlessScrollListener implements AbsListView.OnScrollListe
         // the visibleThreshold and need to reload more data.
         // If we do need to reload some more data, we execute onLoadMore to fetch the data.
         if (!loading && (totalItemCount - visibleItemCount)<=(firstVisibleItem + visibleThreshold)) {
-            // add a boundary check
-            if (totalItemCount >= this.upperLimit) {
-                return;
-            }
+            Log.d("DEBUG", "IMAGE_SEARCH, set loading to true, total item count is " + totalItemCount + " page to fetch is " + currentPage + 1);
             onLoadMore(currentPage + 1, totalItemCount);
             loading = true;
-            Log.d("DEBUG", "onLoadMore, total item count is " + totalItemCount);
         }
     }
 
