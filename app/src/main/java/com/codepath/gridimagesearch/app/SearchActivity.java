@@ -30,19 +30,19 @@ public class SearchActivity extends ActionBarActivity {
     ArrayList<ImageResult> imageResults = new ArrayList<ImageResult>();
     ImageResultArrayAdapter imageAdapter;
     ImageFiltering imageFiltering;
-    int nextStartIndex;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
         setupViews();
-        gvResults.setOnScrollListener(new EndlessScrollListener() {
+        // the deprecated google image search API displays a maximum of 64 pictures
+        gvResults.setOnScrollListener(new EndlessScrollListener(5, 64) {
             @Override
-            public void onLoadMore() {
+            public void onLoadMore(int page, int totalItemsCount) {
                 // Triggered only when new data needs to be appended to the list
                 // Add whatever code is needed to append new items to your AdapterView
-                performSearch(nextStartIndex);
+                customLoadMoreDataFromApi(totalItemsCount);
             }
         });
         imageAdapter = new ImageResultArrayAdapter(this, imageResults);
@@ -89,7 +89,7 @@ public class SearchActivity extends ActionBarActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_OK && requestCode == REQUEST_CODE) {
             imageFiltering = (ImageFiltering)data.getSerializableExtra("newImageFiltering");
-            performSearch(0);
+            performNewSearch();
         }
     }
 
@@ -100,6 +100,12 @@ public class SearchActivity extends ActionBarActivity {
     }
 
     public void onImageSearch(View v) {
+        performNewSearch();
+    }
+
+    public void performNewSearch() {
+        imageResults.clear();
+        imageAdapter.notifyDataSetChanged();
         performSearch(0);
     }
 
@@ -140,7 +146,7 @@ public class SearchActivity extends ActionBarActivity {
             }
         }
         apiString += "&v=1.0&q=" + Uri.encode(query);
-        Log.d("DEBUG", "TINA!!!fetching request with query " + apiString);
+        Log.d("DEBUG", "sending http request for " + apiString);
         client.get(apiString,
                 new JsonHttpResponseHandler() {
                     @Override
@@ -154,8 +160,7 @@ public class SearchActivity extends ActionBarActivity {
                             int currentPageIndex = cursor.getInt("currentPageIndex");
                             JSONArray pages = cursor.getJSONArray("pages");
                             JSONObject startLabelPair = pages.getJSONObject(currentPageIndex + 1);
-                            nextStartIndex = startLabelPair.getInt("start");
-                            Log.d("DEBUG", "TINA!!! count of pages is "+ pages.length() + "currentPageIndex is " + currentPageIndex);
+                            Log.d("DEBUG", "http response back" + pages.toString());
 
                             // reset if first page
                             if (currentPageIndex == 0) {
@@ -164,11 +169,18 @@ public class SearchActivity extends ActionBarActivity {
                             // always append
                             imageResults.addAll(ImageResult.fromJSONArray(imageJsonResults));
                             imageAdapter.notifyDataSetChanged();
-                            Log.d("DEBUG", "TINA!!! results came back, count is " + imageJsonResults.length() + " total count is " + imageAdapter.getCount() + " next cursor is " + nextStartIndex);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
                     }
+                    public void onFailure(int statusCode, org.apache.http.Header[] headers, java.lang.String responseBody, java.lang.Throwable e) {
+                        Log.d("DEBUG", "request failed");
+                    }
                 });
+    }
+    // Append more data into the adapter
+    public void customLoadMoreDataFromApi(int offset) {
+        performSearch(offset);
+        Log.d("DEBUG", "firing search at offset " + offset);
     }
 }
