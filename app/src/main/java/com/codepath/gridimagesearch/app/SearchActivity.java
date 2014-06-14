@@ -12,7 +12,6 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridView;
-import android.widget.Toast;
 
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.JsonHttpResponseHandler;
@@ -30,12 +29,22 @@ public class SearchActivity extends ActionBarActivity {
     Button btnSearch;
     ArrayList<ImageResult> imageResults = new ArrayList<ImageResult>();
     ImageResultArrayAdapter imageAdapter;
+    ImageFiltering imageFiltering;
+    int nextStartIndex;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
         setupViews();
+        gvResults.setOnScrollListener(new EndlessScrollListener() {
+            @Override
+            public void onLoadMore() {
+                // Triggered only when new data needs to be appended to the list
+                // Add whatever code is needed to append new items to your AdapterView
+                performSearch(nextStartIndex);
+            }
+        });
         imageAdapter = new ImageResultArrayAdapter(this, imageResults);
         gvResults.setAdapter(imageAdapter);
 
@@ -50,7 +59,6 @@ public class SearchActivity extends ActionBarActivity {
         });
     }
 
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         
@@ -59,16 +67,30 @@ public class SearchActivity extends ActionBarActivity {
         return true;
     }
 
+    private final int REQUEST_CODE = 20;
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-        if (id == R.id.action_settings) {
+        if (id == R.id.miSettings) {
+            Intent intent = new Intent(this, SearchFilterActivity.class);
+            if (imageFiltering != null) {
+                intent.putExtra("imageFiltering", imageFiltering);
+            }
+            startActivityForResult(intent, REQUEST_CODE);
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == RESULT_OK && requestCode == REQUEST_CODE) {
+            imageFiltering = (ImageFiltering)data.getSerializableExtra("newImageFiltering");
+            performSearch(0);
+        }
     }
 
     public void setupViews() {
@@ -78,12 +100,48 @@ public class SearchActivity extends ActionBarActivity {
     }
 
     public void onImageSearch(View v) {
+        performSearch(0);
+    }
+
+    private  void performSearch(int offset) {
         String query = etQuery.getText().toString();
-        Toast.makeText(this, "Searching for " + query, Toast.LENGTH_SHORT).show();
         AsyncHttpClient client = new AsyncHttpClient();
         // http://ajax.googleapis.com/ajax/services/search/images?v=1.0&q=android
-        client.get("https://ajax.googleapis.com/ajax/services/search/images?rsz=8&&" +
-        "start=" + 0 + "&v=1.0&q=" + Uri.encode(query),
+        String apiString = "https://ajax.googleapis.com/ajax/services/search/images?rsz=8&" +
+                "start=" + offset;
+        if (imageFiltering != null) {
+            String imageSizePreference = imageFiltering.getImageSize();
+            if (imageSizePreference != null && !imageSizePreference.isEmpty()) {
+                String searchParam;
+                // translating to query param input
+                if (imageSizePreference == "small") {
+                    searchParam = "icon";
+                } else if (imageSizePreference == "medium") {
+                    searchParam = "small";
+                } else if (imageSizePreference == "large") {
+                    searchParam = "xxlarge";
+                } else if (imageSizePreference == "xlarge") {
+                    searchParam = "huge";
+                }
+
+                apiString += "&imgsz=" + imageSizePreference;
+            }
+            String colorFilterPreference = imageFiltering.getColorFilter();
+            if (colorFilterPreference != null && !colorFilterPreference.isEmpty()) {
+                apiString += "&imgcolor=" + colorFilterPreference;
+            }
+            String imageTypePreference = imageFiltering.getImageType();
+            if (imageTypePreference != null && !imageTypePreference.isEmpty()) {
+                apiString += "&imgtype=" + imageTypePreference;
+            }
+            String siteFilterPreference = imageFiltering.getSiteFilter();
+            if (siteFilterPreference != null && !siteFilterPreference.isEmpty()) {
+                apiString += "&as_sitesearch=" + siteFilterPreference;
+            }
+        }
+        apiString += "&v=1.0&q=" + Uri.encode(query);
+        Log.d("DEBUG", "TINA!!!fetching request with query " + apiString);
+        client.get(apiString,
                 new JsonHttpResponseHandler() {
                     @Override
                     public void onSuccess(JSONObject response) {
@@ -91,9 +149,22 @@ public class SearchActivity extends ActionBarActivity {
                         try {
                             imageJsonResults = response.getJSONObject(
                                     "responseData").getJSONArray("results");
-                            imageResults.clear();
-                            imageAdapter.addAll(ImageResult.fromJSONArray(imageJsonResults));
-                            Log.d("DEBUG", imageResults.toString());
+                            // check if is first page
+                            JSONObject cursor = response.getJSONObject("responseData").getJSONObject("cursor");
+                            int currentPageIndex = cursor.getInt("currentPageIndex");
+                            JSONArray pages = cursor.getJSONArray("pages");
+                            JSONObject startLabelPair = pages.getJSONObject(currentPageIndex + 1);
+                            nextStartIndex = startLabelPair.getInt("start");
+                            Log.d("DEBUG", "TINA!!! count of pages is "+ pages.length() + "currentPageIndex is " + currentPageIndex);
+
+                            // reset if first page
+                            if (currentPageIndex == 0) {
+                                imageResults.clear();
+                            }
+                            // always append
+                            imageResults.addAll(ImageResult.fromJSONArray(imageJsonResults));
+                            imageAdapter.notifyDataSetChanged();
+                            Log.d("DEBUG", "TINA!!! results came back, count is " + imageJsonResults.length() + " total count is " + imageAdapter.getCount() + " next cursor is " + nextStartIndex);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
