@@ -14,5 +14,8 @@
     <string name="image_type">Image Type</string>
     <string name="site_filter">Site Filter</string>
     <string name="no_wifi">No WiFi Connection. Need WiFi to search</string>
+    <string name="image_loading_error">Image failed to load</string>
+    <string name="network_request_error">Network request failed</string>
+    <string name="zoom_hint">Pinch to zoom</string>
 
 </resources>

@@ -209,7 +209,7 @@ public class SearchActivity extends ActionBarActivity implements SearchFilterDia
                     public void onFailure(Throwable e, JSONArray errorResponse) {
                         Log.d("DEBUG", "IMAGE_SEARCH: heard a response on failure");
                         Log.d("ERROR", e.toString());
-                        Toast.makeText(getApplicationContext(), "Network request failed", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getApplicationContext(), R.string.network_request_error, Toast.LENGTH_SHORT).show();
                         // retry
                         performSearch(offset);
                     }
