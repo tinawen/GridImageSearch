@@ -24,10 +24,6 @@
             android:name="com.codepath.gridimagesearch.app.ImageDisplayActivity"
             android:label="@string/title_activity_image_display" >
         </activity>
-        <activity
-            android:name="com.codepath.gridimagesearch.app.SearchFilterActivity"
-            android:label="@string/title_activity_search_filter" >
-        </activity>
     </application>
 
 </manifest>

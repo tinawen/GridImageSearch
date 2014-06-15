@@ -23,13 +23,19 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 
 
-public class SearchActivity extends ActionBarActivity {
+public class SearchActivity extends ActionBarActivity implements SearchFilterDialog.SearchFilterDialogListener {
     GridView gvResults;
     ArrayList<ImageResult> imageResults = new ArrayList<ImageResult>();
     ImageResultArrayAdapter imageAdapter;
     ImageFiltering imageFiltering;
     Boolean hasReachedPageLimit;
     String queryText;
+
+    @Override
+    public void onFinishEditingSearchFilterDialog(ImageFiltering imageFiltering) {
+        this.imageFiltering = imageFiltering;
+        performNewSearch();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,7 +88,6 @@ public class SearchActivity extends ActionBarActivity {
         return super.onCreateOptionsMenu(menu);
     }
 
-    private final int REQUEST_CODE = 20;
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
@@ -90,26 +95,20 @@ public class SearchActivity extends ActionBarActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         if (id == R.id.miSettings) {
-            Intent intent = new Intent(this, SearchFilterActivity.class);
-            if (imageFiltering != null) {
-                intent.putExtra("imageFiltering", imageFiltering);
-            }
-            startActivityForResult(intent, REQUEST_CODE);
+            showSearchFilterDialog(imageFiltering);
             return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode == RESULT_OK && requestCode == REQUEST_CODE) {
-            imageFiltering = (ImageFiltering)data.getSerializableExtra("newImageFiltering");
-            performNewSearch();
-        }
-    }
-
     public void setupViews() {
         gvResults = (GridView) findViewById(R.id.gvResults);
+    }
+
+    private void showSearchFilterDialog(ImageFiltering imageFiltering) {
+        android.app.FragmentManager fm = this.getFragmentManager();
+        SearchFilterDialog searchFilterDialog = SearchFilterDialog.newInstance(imageFiltering);
+        searchFilterDialog.show(fm, "fragment_search_filter");
     }
 
     public void performNewSearch() {
