@@ -1,6 +1,9 @@
 package com.codepath.gridimagesearch.app;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
@@ -158,6 +161,10 @@ public class SearchActivity extends ActionBarActivity implements SearchFilterDia
             }
         }
         apiString += "&v=1.0&q=" + Uri.encode(queryText);
+        if (!isConnectedToNetWork()) {
+            Toast.makeText(this, R.string.no_wifi, Toast.LENGTH_SHORT).show();
+            return;
+        }
         Log.d("DEBUG", "IMAGE_SEARCH: sending http request for " + apiString);
         client.get(apiString,
                 new JsonHttpResponseHandler() {
@@ -212,5 +219,12 @@ public class SearchActivity extends ActionBarActivity implements SearchFilterDia
     public void customLoadMoreDataFromApi(int offset) {
         Log.d("DEBUG", "IMAGE_SEARCH: firing search at offset " + offset);
         performSearch(offset);
+    }
+
+    private boolean isConnectedToNetWork() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnectedOrConnecting();
     }
 }

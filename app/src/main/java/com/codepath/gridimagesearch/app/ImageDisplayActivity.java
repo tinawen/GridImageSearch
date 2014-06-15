@@ -31,8 +31,9 @@ public class ImageDisplayActivity extends ActionBarActivity {
         setContentView(R.layout.activity_image_display);
         ImageResult imageResult = (ImageResult) getIntent().getSerializableExtra("result");
         SmartImageView ivImage = (SmartImageView) findViewById(R.id.ivResult);
+
         ivImage.setImageUrl(imageResult.getFullUrl(), new SmartImageTask.OnCompleteListener() {
-            @Override
+           @Override
             public void onComplete() {
                 // Setup share intent now that image has loaded
                 setupShareIntent();
