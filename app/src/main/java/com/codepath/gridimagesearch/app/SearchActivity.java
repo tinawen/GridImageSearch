@@ -106,8 +106,7 @@ public class SearchActivity extends ActionBarActivity {
     }
 
     public void performNewSearch() {
-        //imageResults.clear();
-        //imageAdapter.notifyDataSetChanged();
+        imageAdapter.clear();
         hasReachedPageLimit = false;
         performSearch(0);
     }
@@ -177,11 +176,10 @@ public class SearchActivity extends ActionBarActivity {
                             Log.d("DEBUG", "IMAGE_SEARCH: current page index is " + currentPageIndex + " results count is " + ImageResult.fromJSONArray(imageJsonResults).size());
                             // reset if first page
                             if (currentPageIndex == 0) {
-                                imageResults.clear();
+                                imageAdapter.clear();
                             }
                             // always append
-                            imageResults.addAll(ImageResult.fromJSONArray(imageJsonResults));
-                            imageAdapter.notifyDataSetChanged();
+                            imageAdapter.addAll(ImageResult.fromJSONArray(imageJsonResults));
                             Log.d("DEBUG", "IMAGE_SEARCH, hasReachedPageLimit is " + hasReachedPageLimit +
                                     " pages.length is " + pages.length() + " images results array count is " + imageResults.size());
                             if (!hasReachedPageLimit) {
