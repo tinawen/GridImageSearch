@@ -7,14 +7,13 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     android:paddingBottom="@dimen/activity_vertical_margin"
-    android:layout_alignParentTop="true"
     tools:context="com.codepath.gridimagesearch.app.SearchFilterActivity">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="Advanced search options"
+        android:text="@string/advanced_search_options"
         android:textStyle="bold"
         android:id="@+id/tvTitle"
         android:layout_alignParentTop="true"
@@ -25,7 +24,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Image Size"
+        android:text="@string/image_size"
         android:id="@+id/tvImageSize"
         android:layout_below="@+id/tvTitle"
         android:layout_alignParentLeft="true"
@@ -47,7 +46,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Color Filter"
+        android:text="@string/color_filter"
         android:id="@+id/tvColorFilter"
         android:layout_below="@+id/tvImageSize"
         android:layout_alignParentLeft="true"
@@ -69,7 +68,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Image Type"
+        android:text="@string/image_type"
         android:id="@+id/tvImageType"
         android:layout_below="@+id/tvColorFilter"
         android:layout_alignParentLeft="true"
@@ -91,7 +90,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Site Filter"
+        android:text="@string/site_filter"
         android:id="@+id/tvSiteFilter"
         android:layout_below="@+id/spImageType"
         android:layout_alignParentLeft="true"
@@ -116,7 +115,8 @@
         android:text="Save"
         android:id="@+id/btnSave"
         android:layout_below="@+id/etSiteFilter"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="20dp" />
+        android:layout_marginTop="20dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true" />
 
 </RelativeLayout>

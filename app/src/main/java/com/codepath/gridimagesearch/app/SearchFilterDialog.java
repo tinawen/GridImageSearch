@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -16,7 +17,6 @@ public class SearchFilterDialog extends DialogFragment implements View.OnClickLi
     Spinner spColorFilter;
     Spinner spImageType;
     EditText etSiteFilter;
-    Button btnSave;
 
     public SearchFilterDialog() {
         // Empty constructor required for DialogFragment
@@ -46,7 +46,7 @@ public class SearchFilterDialog extends DialogFragment implements View.OnClickLi
             imageFiltering = (ImageFiltering) getArguments().getSerializable("imageFiltering");
         }
         setupViewsInView(view, imageFiltering);
-        btnSave.setOnClickListener(this);
+        getDialog().requestWindowFeature(Window.FEATURE_NO_TITLE);
         return view;
     }
 
@@ -67,7 +67,8 @@ public class SearchFilterDialog extends DialogFragment implements View.OnClickLi
         spColorFilter = setUpSpinnerInView(view, R.id.spColorFilter, R.array.color_filter_array, imageFiltering != null ? imageFiltering.getColorFilter() : null);
         spImageType = setUpSpinnerInView(view, R.id.spImageType, R.array.image_type_array, imageFiltering != null ? imageFiltering.getImageType() : null);
         etSiteFilter = (EditText) view.findViewById(R.id.etSiteFilter);
-        btnSave = (Button) view.findViewById(R.id.btnSave);
+        Button btnSave = (Button) view.findViewById(R.id.btnSave);
+        btnSave.setOnClickListener(this);
         if (imageFiltering != null) {
             etSiteFilter.setText(imageFiltering.getSiteFilter());
         }
