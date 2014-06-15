@@ -7,11 +7,12 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.ShareActionProvider;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ImageView;
-import android.widget.ShareActionProvider;
 
 import com.loopj.android.image.SmartImageTask;
 import com.loopj.android.image.SmartImageView;
@@ -89,7 +90,7 @@ public class ImageDisplayActivity extends ActionBarActivity {
         // Locate MenuItem with ShareActionProvider
         MenuItem item = menu.findItem(R.id.miShare);
         // Fetch reference to the share action provider
-        miShareAction = (ShareActionProvider) item.getActionProvider();
+        miShareAction = (ShareActionProvider) MenuItemCompat.getActionProvider(item);
         // Return true to display menu
         return true;
     }
