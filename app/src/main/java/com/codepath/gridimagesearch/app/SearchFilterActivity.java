@@ -59,7 +59,7 @@ public class SearchFilterActivity extends ActionBarActivity {
     public Spinner setUpSpinner(int spinnerResId, int textArrayResId, String defaultValue) {
         Spinner spinner = (Spinner) findViewById(spinnerResId);
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
-                textArrayResId, android.R.layout.simple_spinner_item);
+                textArrayResId, R.layout.spinner_dropdown_align_right_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
         if (defaultValue != null && !defaultValue.isEmpty()) {
