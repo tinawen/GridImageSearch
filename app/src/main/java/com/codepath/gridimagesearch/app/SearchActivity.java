@@ -4,13 +4,12 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.Toast;
 
@@ -25,13 +24,12 @@ import java.util.ArrayList;
 
 
 public class SearchActivity extends ActionBarActivity {
-    EditText etQuery;
     GridView gvResults;
-    Button btnSearch;
     ArrayList<ImageResult> imageResults = new ArrayList<ImageResult>();
     ImageResultArrayAdapter imageAdapter;
     ImageFiltering imageFiltering;
     Boolean hasReachedPageLimit;
+    String queryText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,10 +61,25 @@ public class SearchActivity extends ActionBarActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.search, menu);
-        return true;
+        MenuItem searchItem = menu.findItem(R.id.miSearch);
+        SearchView searchView = (SearchView) searchItem.getActionView();
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String s) {
+                queryText = s;
+                performNewSearch();
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String s) {
+                return false;
+            }
+        });
+
+        return super.onCreateOptionsMenu(menu);
     }
 
     private final int REQUEST_CODE = 20;
@@ -96,13 +109,7 @@ public class SearchActivity extends ActionBarActivity {
     }
 
     public void setupViews() {
-        etQuery = (EditText) findViewById(R.id.etQuery);
         gvResults = (GridView) findViewById(R.id.gvResults);
-        btnSearch = (Button) findViewById(R.id.btnSearch);
-    }
-
-    public void onImageSearch(View v) {
-        performNewSearch();
     }
 
     public void performNewSearch() {
@@ -116,7 +123,7 @@ public class SearchActivity extends ActionBarActivity {
             Log.d("DEBUG", "IMAGE_SEARCH: has reached page limit, not searching");
             return;
         }
-        String query = etQuery.getText().toString();
+
         AsyncHttpClient client = new AsyncHttpClient();
         // http://ajax.googleapis.com/ajax/services/search/images?v=1.0&q=android
         String apiString = "https://ajax.googleapis.com/ajax/services/search/images?rsz=8&" +
@@ -151,7 +158,7 @@ public class SearchActivity extends ActionBarActivity {
                 apiString += "&as_sitesearch=" + siteFilterPreference;
             }
         }
-        apiString += "&v=1.0&q=" + Uri.encode(query);
+        apiString += "&v=1.0&q=" + Uri.encode(queryText);
         Log.d("DEBUG", "IMAGE_SEARCH: sending http request for " + apiString);
         client.get(apiString,
                 new JsonHttpResponseHandler() {

@@ -1,11 +1,18 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.codepath.gridimagesearch.app.SearchActivity" >
+xmlns:app="http://schemas.android.com/apk/res-auto"
+xmlns:tools="http://schemas.android.com/tools"
+tools:context="com.codepath.gridimagesearch.app.SearchActivity" >
 
-    <item android:id="@+id/miSettings"
-        android:icon="@drawable/ic_settings"
-        android:title="@string/action_settings"
-        app:showAsAction="ifRoom" />
+<item android:id="@+id/miSearch"
+    android:orderInCategory="5"
+    android:title="Search"
+    android:icon="@drawable/ic_search"
+    app:showAsAction="ifRoom|collapseActionView"
+    app:actionViewClass="android.support.v7.widget.SearchView" />
+
+<item android:id="@+id/miSettings"
+    android:icon="@drawable/ic_settings"
+    android:title="@string/action_settings"
+    app:showAsAction="ifRoom" />
 
 </menu>
