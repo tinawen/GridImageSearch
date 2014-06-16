@@ -25,38 +25,41 @@ import java.io.IOException;
 
 
 public class ImageDisplayActivity extends ActionBarActivity {
-    private ShareActionProvider miShareAction;
-
-    static final String HAS_SEEN_ZOOM_HINT = "com.codepath.gridimagesearch.app.hasseenzoomhint";
+    private static final String HAS_SEEN_ZOOM_HINT = "com.codepath.gridimagesearch.app.hasseenzoomhint";
+    private ShareActionProvider shareActionProvider;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_display);
+
         ImageResult imageResult = (ImageResult) getIntent().getSerializableExtra("result");
-
         TouchImageView ivImage = (TouchImageView) findViewById(R.id.ivResult);
-        Uri uri = Uri.parse(imageResult.getFullUrl());
-
-        Picasso.with(this).load(uri).into(ivImage, new Callback() {
-            @Override
-            public void onSuccess() {
-                // Setup share intent now that image has loaded
-                setupShareIntent();
-                SharedPreferences prefs = getPreferences(MODE_PRIVATE);
-                boolean hasSeenZoomHint = prefs.getBoolean(HAS_SEEN_ZOOM_HINT, false);
-                if (!hasSeenZoomHint) {
-                    Toast.makeText(getApplicationContext(), R.string.zoom_hint, Toast.LENGTH_SHORT).show();
-                    SharedPreferences.Editor editor = prefs.edit();
-                    editor.putBoolean(HAS_SEEN_ZOOM_HINT, true).commit();
+        if (imageResult == null || imageResult.getFullUrl() == null) {
+            throw new AssertionError("url passed into ImageDisplayActivity cannot be null");
+        } else {
+            Uri uri = Uri.parse(imageResult.getFullUrl());
+            Picasso.with(this).load(uri).into(ivImage, new Callback() {
+                @Override
+                public void onSuccess() {
+                    // Setup share intent now that image has loaded
+                    setupShareIntent();
+                    // display hint for pinching to zoom, only for the very first time
+                    SharedPreferences prefs = getPreferences(MODE_PRIVATE);
+                    boolean hasSeenZoomHint = prefs.getBoolean(HAS_SEEN_ZOOM_HINT, false);
+                    if (!hasSeenZoomHint) {
+                        Toast.makeText(getApplicationContext(), R.string.zoom_hint, Toast.LENGTH_SHORT).show();
+                        SharedPreferences.Editor editor = prefs.edit();
+                        editor.putBoolean(HAS_SEEN_ZOOM_HINT, true).commit();
+                    }
                 }
-            }
 
-            @Override
-            public void onError() {
-                Toast.makeText(getApplicationContext(), R.string.image_loading_error, Toast.LENGTH_SHORT).show();
-            }
-        });
+                @Override
+                public void onError() {
+                    Toast.makeText(getApplicationContext(), R.string.image_loading_error, Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
     }
 
     // Gets the image URI and setup the associated share intent to hook into the provider
@@ -70,8 +73,8 @@ public class ImageDisplayActivity extends ActionBarActivity {
         shareIntent.putExtra(Intent.EXTRA_STREAM, bmpUri);
         shareIntent.setType("image/*");
         // Attach share event to the menu item provider
-        if (miShareAction != null) {
-            miShareAction.setShareIntent(shareIntent);
+        if (shareActionProvider != null) {
+            shareActionProvider.setShareIntent(shareIntent);
         }
     }
 
@@ -103,13 +106,12 @@ public class ImageDisplayActivity extends ActionBarActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.image_display, menu);
         // Locate MenuItem with ShareActionProvider
         MenuItem item = menu.findItem(R.id.miShare);
         // Fetch reference to the share action provider
-        miShareAction = (ShareActionProvider) MenuItemCompat.getActionProvider(item);
+        shareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(item);
         // Return true to display menu
         return true;
     }
@@ -121,5 +123,4 @@ public class ImageDisplayActivity extends ActionBarActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         return super.onOptionsItemSelected(item);
     }
-
 }

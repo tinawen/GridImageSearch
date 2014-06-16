@@ -23,6 +23,7 @@ public class ImageResult implements Serializable {
             this.thumbUrl = null;
         }
     }
+
     public String getFullUrl() {
         return fullUrl;
     }

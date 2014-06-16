@@ -28,7 +28,6 @@ public class ImageFiltering implements Serializable {
     }
 
     public ImageFiltering(String imageSize, String colorFilter, String imageType, String siteFilter) {
-
         this.imageSize = imageSize;
         this.colorFilter = colorFilter;
         this.imageType = imageType;

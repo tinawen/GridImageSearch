@@ -17,6 +17,7 @@ public class SearchFilterDialog extends DialogFragment implements View.OnClickLi
     Spinner spColorFilter;
     Spinner spImageType;
     EditText etSiteFilter;
+    Button btnSave;
 
     public SearchFilterDialog() {
         // Empty constructor required for DialogFragment
@@ -37,8 +38,7 @@ public class SearchFilterDialog extends DialogFragment implements View.OnClickLi
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_search_filter, container);
         Bundle args = getArguments();
         ImageFiltering imageFiltering = null;
@@ -52,14 +52,16 @@ public class SearchFilterDialog extends DialogFragment implements View.OnClickLi
 
     @Override
     public void onClick (View v) {
-        ImageFiltering imageFiltering = new ImageFiltering(
-                spImageSize.getSelectedItem().toString(),
-                spColorFilter.getSelectedItem().toString(),
-                spImageType.getSelectedItem().toString(),
-                etSiteFilter.getText().toString());
-        SearchFilterDialogListener listener = (SearchFilterDialogListener) getActivity();
-        listener.onFinishEditingSearchFilterDialog(imageFiltering);
-        dismiss();
+        if (v == btnSave) {
+            ImageFiltering imageFiltering = new ImageFiltering(
+                    spImageSize.getSelectedItem().toString(),
+                    spColorFilter.getSelectedItem().toString(),
+                    spImageType.getSelectedItem().toString(),
+                    etSiteFilter.getText().toString());
+            SearchFilterDialogListener listener = (SearchFilterDialogListener) getActivity();
+            listener.onFinishEditingSearchFilterDialog(imageFiltering);
+            dismiss();
+        }
     }
 
     public void setupViewsInView(View view, ImageFiltering imageFiltering) {
@@ -67,7 +69,7 @@ public class SearchFilterDialog extends DialogFragment implements View.OnClickLi
         spColorFilter = setUpSpinnerInView(view, R.id.spColorFilter, R.array.color_filter_array, imageFiltering != null ? imageFiltering.getColorFilter() : null);
         spImageType = setUpSpinnerInView(view, R.id.spImageType, R.array.image_type_array, imageFiltering != null ? imageFiltering.getImageType() : null);
         etSiteFilter = (EditText) view.findViewById(R.id.etSiteFilter);
-        Button btnSave = (Button) view.findViewById(R.id.btnSave);
+        btnSave = (Button) view.findViewById(R.id.btnSave);
         btnSave.setOnClickListener(this);
         if (imageFiltering != null) {
             etSiteFilter.setText(imageFiltering.getSiteFilter());

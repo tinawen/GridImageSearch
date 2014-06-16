@@ -1,7 +1,6 @@
 package com.codepath.gridimagesearch.app;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,19 +26,18 @@ public class ImageResultArrayAdapter extends ArrayAdapter<ImageResult> {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         ImageResult imageInfo = this.getItem(position);
-        SmartImageView ivImage;
         ViewHolder viewHolder;
         String newUrl = imageInfo.getThumbUrl();
         if (convertView == null) {
             viewHolder = new ViewHolder();
             LayoutInflater inflater = LayoutInflater.from(getContext());
             convertView = inflater.inflate(R.layout.item_image_result, parent, false);
+            convertView.setTag(viewHolder);
             viewHolder.url = newUrl;
             viewHolder.imageView = (SmartImageView) convertView.findViewById(R.id.image);
-            convertView.setTag(viewHolder);
         } else {
             viewHolder = (ViewHolder) convertView.getTag();
-            // only erase image if we want to display a different image
+            // only erase image bitmap if we want to display a different image
             if (!viewHolder.url.equals(newUrl)) {
                 viewHolder.imageView.setImageBitmap(null);
                 viewHolder.url = newUrl;

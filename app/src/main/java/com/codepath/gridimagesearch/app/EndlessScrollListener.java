@@ -1,6 +1,5 @@
 package com.codepath.gridimagesearch.app;
 
-import android.util.Log;
 import android.widget.AbsListView;
 
 public abstract class EndlessScrollListener implements AbsListView.OnScrollListener {
@@ -29,28 +28,22 @@ public abstract class EndlessScrollListener implements AbsListView.OnScrollListe
         this.currentPage = startPage;
     }
 
-    // This happens many times a second during a scroll, so be wary of the code you place here.
-    // We are given a few useful parameters to help us work out if we need to load some more data,
-    // but first we check if we are waiting for the previous load to finish.
+    // This happens many times a second during a scroll
     @Override
     public void onScroll(AbsListView view,int firstVisibleItem,int visibleItemCount,int totalItemCount)
     {
         // If the total item count is zero and the previous isn't, assume the
         // list is invalidated and should be reset back to initial state
         if (totalItemCount < previousTotalItemCount) {
-            Log.d("DEBUG", "IMAGE_SEARCH, onScroll resetting, totalItemCount is " + totalItemCount + " previousTotalItemCount is " + previousTotalItemCount);
             this.currentPage = this.startingPageIndex;
             this.previousTotalItemCount = totalItemCount;
-            if (totalItemCount == 0) { this.loading = true;
-                Log.d("DEBUG", "IMAGE_SEARCH, onScroll resetting loading to true");
-            }
+            if (totalItemCount == 0) { this.loading = true; }
         }
 
         // If it’s still loading, we check to see if the dataset count has
         // changed, if so we conclude it has finished loading and update the current page
         // number and total item count.
         if (loading && (totalItemCount > previousTotalItemCount)) {
-            Log.d("DEBUG", "IMAGE_SEARCH, setting loading to false totalItemCount is " + totalItemCount + " previous total item count is " + previousTotalItemCount);
             loading = false;
             previousTotalItemCount = totalItemCount;
             currentPage++;
@@ -60,7 +53,6 @@ public abstract class EndlessScrollListener implements AbsListView.OnScrollListe
         // the visibleThreshold and need to reload more data.
         // If we do need to reload some more data, we execute onLoadMore to fetch the data.
         if (!loading && (totalItemCount - visibleItemCount)<=(firstVisibleItem + visibleThreshold)) {
-            Log.d("DEBUG", "IMAGE_SEARCH, set loading to true, total item count is " + totalItemCount + " page to fetch is " + currentPage + 1);
             onLoadMore(currentPage + 1, totalItemCount);
             loading = true;
         }

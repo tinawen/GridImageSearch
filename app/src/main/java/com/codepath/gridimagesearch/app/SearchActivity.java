@@ -27,9 +27,12 @@ import java.util.ArrayList;
 
 
 public class SearchActivity extends ActionBarActivity implements SearchFilterDialog.SearchFilterDialogListener {
+    // grid view
     GridView gvResults;
-    ArrayList<ImageResult> imageResults = new ArrayList<ImageResult>();
     ImageResultArrayAdapter imageAdapter;
+    ArrayList<ImageResult> imageResults = new ArrayList<ImageResult>();
+
+    // states
     ImageFiltering imageFiltering;
     Boolean hasReachedPageLimit;
     String queryText;
@@ -44,28 +47,7 @@ public class SearchActivity extends ActionBarActivity implements SearchFilterDia
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
-        setupViews();
-        // the deprecated google image search API displays a maximum of 64 pictures
-        gvResults.setOnScrollListener(new EndlessScrollListener() {
-            @Override
-            public void onLoadMore(int page, int totalItemsCount) {
-                // Triggered only when new data needs to be appended to the list
-                // Add whatever code is needed to append new items to your AdapterView
-                customLoadMoreDataFromApi(totalItemsCount);
-            }
-        });
-        imageAdapter = new ImageResultArrayAdapter(this, imageResults);
-        gvResults.setAdapter(imageAdapter);
-
-        gvResults.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Intent intent = new Intent(getApplicationContext(), ImageDisplayActivity.class);
-                ImageResult imageResult = imageResults.get(i);
-                intent.putExtra("result", imageResult);
-                startActivity(intent);
-            }
-        });
+        setupGridView();
     }
 
     @Override
@@ -93,9 +75,6 @@ public class SearchActivity extends ActionBarActivity implements SearchFilterDia
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         if (id == R.id.miSettings) {
             showSearchFilterDialog(imageFiltering);
@@ -104,8 +83,29 @@ public class SearchActivity extends ActionBarActivity implements SearchFilterDia
         return super.onOptionsItemSelected(item);
     }
 
-    public void setupViews() {
+    private void setupGridView() {
         gvResults = (GridView) findViewById(R.id.gvResults);
+        gvResults.setOnScrollListener(new EndlessScrollListener() {
+            @Override
+            public void onLoadMore(int page, int totalItemsCount) {
+                // Triggered only when new data needs to be appended to the list
+                // Add whatever code is needed to append new items to AdapterView
+                customLoadMoreDataFromApi(totalItemsCount);
+            }
+        });
+        imageAdapter = new ImageResultArrayAdapter(this, imageResults);
+        gvResults.setAdapter(imageAdapter);
+
+        gvResults.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                // display image full screen
+                Intent intent = new Intent(getApplicationContext(), ImageDisplayActivity.class);
+                ImageResult imageResult = imageResults.get(i);
+                intent.putExtra("result", imageResult);
+                startActivity(intent);
+            }
+        });
     }
 
     private void showSearchFilterDialog(ImageFiltering imageFiltering) {
@@ -114,19 +114,13 @@ public class SearchActivity extends ActionBarActivity implements SearchFilterDia
         searchFilterDialog.show(fm, "fragment_search_filter");
     }
 
-    public void performNewSearch() {
+    private void performNewSearch() {
         imageAdapter.clear();
         hasReachedPageLimit = false;
         performSearch(0);
     }
 
-    private  void performSearch(final int offset) {
-        if (hasReachedPageLimit) {
-            Log.d("DEBUG", "IMAGE_SEARCH: has reached page limit, not searching");
-            return;
-        }
-
-        AsyncHttpClient client = new AsyncHttpClient();
+    private String apiQueryStringForOffset(int offset) {
         // http://ajax.googleapis.com/ajax/services/search/images?v=1.0&q=android
         String apiString = "https://ajax.googleapis.com/ajax/services/search/images?rsz=8&" +
                 "start=" + offset;
@@ -161,6 +155,19 @@ public class SearchActivity extends ActionBarActivity implements SearchFilterDia
             }
         }
         apiString += "&v=1.0&q=" + Uri.encode(queryText);
+        return apiString;
+    }
+
+    private  void performSearch(final int offset) {
+        if (hasReachedPageLimit) {
+            Log.d("DEBUG", "IMAGE_SEARCH: has reached page limit, not searching");
+            return;
+        }
+
+        AsyncHttpClient client = new AsyncHttpClient();
+        String apiString = apiQueryStringForOffset(offset);
+
+        // check connectivity
         if (!isConnectedToNetWork()) {
             Toast.makeText(this, R.string.no_wifi, Toast.LENGTH_SHORT).show();
             return;
@@ -170,12 +177,12 @@ public class SearchActivity extends ActionBarActivity implements SearchFilterDia
                 new JsonHttpResponseHandler() {
                     @Override
                     public void onSuccess(JSONObject response) {
-                        Log.d("DEBUG", "IMAGE_SEARCH: heard a response on success");
-                        JSONArray imageJsonResults = null;
+                        Log.d("DEBUG", "IMAGE_SEARCH: response on success");
+                        JSONArray imageJsonResults;
                         try {
                             if (response.isNull("responseData")) {
                                 hasReachedPageLimit = true;
-                                Log.d("DEBUG", "IMAGE_SEARCH: has reached page limit!");
+                                Log.d("DEBUG", "IMAGE_SEARCH: has reached page limit");
                                 return;
                             }
                             imageJsonResults = response.getJSONObject(
@@ -185,20 +192,16 @@ public class SearchActivity extends ActionBarActivity implements SearchFilterDia
                             int currentPageIndex = cursor.getInt("currentPageIndex");
                             JSONArray pages = cursor.getJSONArray("pages");
 
-                            Log.d("DEBUG", "IMAGE_SEARCH: http response back" + pages.toString() + " has reached page limit is " + hasReachedPageLimit);
-                            Log.d("DEBUG", "IMAGE_SEARCH: current page index is " + currentPageIndex + " results count is " + ImageResult.fromJSONArray(imageJsonResults).size());
                             // reset if first page
                             if (currentPageIndex == 0) {
                                 imageAdapter.clear();
                             }
                             // always append
                             imageAdapter.addAll(ImageResult.fromJSONArray(imageJsonResults));
-                            Log.d("DEBUG", "IMAGE_SEARCH, hasReachedPageLimit is " + hasReachedPageLimit +
-                                    " pages.length is " + pages.length() + " images results array count is " + imageResults.size());
                             if (!hasReachedPageLimit) {
                                 if (pages.length() == currentPageIndex + 1) {
                                     hasReachedPageLimit = true;
-                                    Log.d("DEBUG", "IMAGE_SEARCH: not much result. has reached limit");
+                                    Log.d("DEBUG", "IMAGE_SEARCH: very small number of results. Has reached limit");
                                 }
                             }
                         } catch (JSONException e) {
@@ -215,15 +218,14 @@ public class SearchActivity extends ActionBarActivity implements SearchFilterDia
                     }
                 });
     }
+
     // Append more data into the adapter
     public void customLoadMoreDataFromApi(int offset) {
-        Log.d("DEBUG", "IMAGE_SEARCH: firing search at offset " + offset);
         performSearch(offset);
     }
 
     private boolean isConnectedToNetWork() {
-        ConnectivityManager connectivityManager
-                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnectedOrConnecting();
     }
